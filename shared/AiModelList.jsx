@@ -1,4 +1,4 @@
-export default [
+export const AI_MODELS = [
 {
 model: "GPT",
 
@@ -151,3 +151,6 @@ subModel: [
 },
 
 ];
+
+
+export default AI_MODELS;

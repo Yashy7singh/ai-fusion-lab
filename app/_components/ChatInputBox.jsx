@@ -14,7 +14,7 @@ function ChatInputBox() {
         {/* Fixed Chat Input */}
         <div className='fixed bottom-0 left-0 w-full  flex justify-center px-4 pb-4'> 
             <div className='w-full border rounded-xl shadow-md max-w-2xl p-4 '>
-                <input type="text" placeholder='Ask me Anything...' className='border-0 outline-none' />
+                <input type="text" placeholder='Ask me Anything...' className='w-full border-0 outline-none' />
 
                 <div className='mt-3 flex justify-between items-center'>
                     <Button variant={'ghost'} size={'icon'}>
