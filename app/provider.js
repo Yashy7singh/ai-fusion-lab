@@ -14,6 +14,7 @@ import { AiSelectedModelContext } from '@/context/AiSelectedModelContext';
 import { DefaultModel } from '@/shared/AiModelsShared';
 import { UserDetailContext } from '@/context/UserDetailContext';
 import { updateDoc } from 'firebase/firestore';
+import { debounce } from 'lodash';
     
 
 function Provider({children, ...props}) {
@@ -54,6 +55,15 @@ function Provider({children, ...props}) {
     }
 }, [user]);
 
+ const updateModelSelectionDebounced = React.useCallback(
+  debounce(async (models) => {
+    if (!user?.id) return;
+    const docRef = doc(db, "users", user.id);
+    await setDoc(docRef, { selectedModelPref: models }, { merge: true });
+  }, 1000),
+  [user]
+);
+
 React.useEffect(() => {
     if(user){
       CreateNewUser();
@@ -61,14 +71,19 @@ React.useEffect(() => {
   }, [user,CreateNewUser]);
 
 React.useEffect(() => {
-    if(aiSelectedModels){
-      updateModelSelection();
+    if(user && aiSelectedModels){
+      updateModelSelectionDebounced(aiSelectedModels);
     }
-}, [aiSelectedModels]);
+}, [aiSelectedModels,user]);
 
 const updateModelSelection = async () => {
-  const docRef = doc(db, "users", user.id);
-  await setDoc(docRef, { selectedModelPref: aiSelectedModels }, { merge: true });
+  if (!user?.id) return;
+  try{
+    const docRef = doc(db, "users", user.id);
+    await setDoc(docRef, { selectedModelPref: aiSelectedModels }, { merge: true });
+  } catch (error) {
+    console.error("Error updating model selection:", error);
+  }
 };
 
   return (

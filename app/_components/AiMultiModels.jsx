@@ -26,6 +26,7 @@ function AiMultiModels() {
     const [aiModelList, setAiModelList] = React.useState(AiModelList);
     const {aiSelectedModels, setAiSelectedModels,messages, setMessages} = React.useContext(AiSelectedModelContext);
 
+
     const onToggleChange = (model,value)=>{
         setAiModelList((prev)=>
             prev.map((m)=>
@@ -122,10 +123,10 @@ function AiMultiModels() {
                                 <span className='text-sm text-blue-900'>{msg.model??model.model}</span>
                             )}
                             <div className='flex items-center gap-3'>
-                            {msg.content == 'loading' && <><Loader2 className='animate-spin'/><span>Generating response...</span></>}
+                            {msg.content === 'loading' && <><Loader2 className='animate-spin'/><span>Generating response...</span></>}
                             </div>
-                            {msg.content !== 'loading' && 
-                            <ReactMarkdown remarkPlugins={[remarkGfm]}>{msg.content}</ReactMarkdown>}
+                            {msg?.content !== 'loading' && 
+                              msg?.content &&<ReactMarkdown remarkPlugins={[remarkGfm]}>{msg.content}</ReactMarkdown>}
                         </div>
                      ))}
                     </div>
