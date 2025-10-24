@@ -4,6 +4,20 @@ import { NextResponse } from "next/server";
 export async function POST(request) {
     try {
     const {model, msg, parentModel} = await request.json();
+
+    if (!model || !msg || !parentModel) {
+      return NextResponse.json(
+        { error: "Missing required fields: model, msg, parentModel" },
+        { status: 400 }
+      );
+    }
+
+     if (typeof msg !== 'string' || msg.length === 0 || msg.length > 10000) {
+      return NextResponse.json(
+        { error: "Invalid message: must be a non-empty string under 10000 characters" },
+        { status: 400 }
+      );
+    }
   /* Send POST request using Axios */
   const response = await axios.post(
     "https://kravixstudio.com/api/v1/chat",

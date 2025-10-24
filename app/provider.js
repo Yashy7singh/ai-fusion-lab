@@ -13,12 +13,14 @@ import { setDoc } from 'firebase/firestore'
 import { AiSelectedModelContext } from '@/context/AiSelectedModelContext';
 import { DefaultModel } from '@/shared/AiModelsShared';
 import { UserDetailContext } from '@/context/UserDetailContext';
+import { updateDoc } from 'firebase/firestore';
     
 
 function Provider({children, ...props}) {
   const {user} = useUser();
   const [aiSelectedModels, setAiSelectedModels] = React.useState(DefaultModel);
   const [userDetail, setUserDetail] = React.useState(null);
+  const [messages, setMessages] = React.useState({});
 
   const CreateNewUser =  React.useCallback(async () => {
     try{
@@ -58,11 +60,22 @@ React.useEffect(() => {
     }
   }, [user,CreateNewUser]);
 
+React.useEffect(() => {
+    if(aiSelectedModels){
+      updateModelSelection();
+    }
+}, [aiSelectedModels]);
+
+const updateModelSelection = async () => {
+  const docRef = doc(db, "users", user.id);
+  await setDoc(docRef, { selectedModelPref: aiSelectedModels }, { merge: true });
+};
+
   return (
     <TooltipProvider>
       <NextThemesProvider {...props} attribute="class" defaultTheme="system" enableSystem >
         <UserDetailContext.Provider value={{userDetail, setUserDetail}}>
-        <AiSelectedModelContext.Provider value={{aiSelectedModels, setAiSelectedModels}}>
+        <AiSelectedModelContext.Provider value={{aiSelectedModels, setAiSelectedModels,messages, setMessages}}>
             <SidebarProvider>
               <AppSidebar />
               

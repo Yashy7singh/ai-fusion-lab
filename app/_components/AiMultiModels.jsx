@@ -9,7 +9,7 @@ import {
   SelectValue,
 } from "@/components/ui/select"
 import { Switch } from "@/components/ui/switch"
-import { MessageSquare } from 'lucide-react'
+import { Loader2, MessageSquare } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Lock } from 'lucide-react'
 import { AiSelectedModelContext } from '@/context/AiSelectedModelContext'
@@ -18,18 +18,30 @@ import { doc, updateDoc } from 'firebase/firestore'
 import { useUser } from '@clerk/nextjs'
 import { db } from '@/config/FirebaseConfig'
 import { setDoc } from 'firebase/firestore'
+import ReactMarkdown from 'react-markdown'
+import remarkGfm from 'remark-gfm'
 
 function AiMultiModels() {
     const {user} = useUser();
     const [aiModelList, setAiModelList] = React.useState(AiModelList);
-    const {aiSelectedModels, setAiSelectedModels} = React.useContext(AiSelectedModelContext);
+    const {aiSelectedModels, setAiSelectedModels,messages, setMessages} = React.useContext(AiSelectedModelContext);
 
     const onToggleChange = (model,value)=>{
         setAiModelList((prev)=>
             prev.map((m)=>
                 m.model === model ? {...m, enable: value} : m
             ))
+        
+        setAiSelectedModels((prev)=>({
+            ...prev,
+            [model]: { 
+                ...(prev?.[model]??{})
+                , enable: value
+            }
+        }))
     }
+
+    console.log("aiSelectedModels in multi models:",aiSelectedModels);
 
     const onSelectValue = async (model, value) => {
       if (!user?.id) return; // optionally show a toast
@@ -101,7 +113,27 @@ function AiMultiModels() {
                         Upgrade to Unlock Premium Models
                     </Button>
                 </div> }
+
+                {model.enable && <div className='flex-1 p-4'>
+                    <div className='flex-1 p-4 space-y-2'>
+                     {messages[model.model] && messages[model.model].map((msg, msgIndex) => (
+                        <div key={msgIndex} className={`p-4 border-b ${msg.role === 'user' ? 'bg-gray-400 border rounded-2xl text-black text-right' : 'bg-blue-300 border rounded-2xl text-blue-800 text-left'}`}>
+                            {msg.role === 'assistant' && (
+                                <span className='text-sm text-blue-900'>{msg.model??model.model}</span>
+                            )}
+                            <div className='flex items-center gap-3'>
+                            {msg.content == 'loading' && <><Loader2 className='animate-spin'/><span>Generating response...</span></>}
+                            </div>
+                            {msg.content !== 'loading' && 
+                            <ReactMarkdown remarkPlugins={[remarkGfm]}>{msg.content}</ReactMarkdown>}
+                        </div>
+                     ))}
+                    </div>
+                </div>
+            }
             </div>
+    
+
             ))}    
 
             
