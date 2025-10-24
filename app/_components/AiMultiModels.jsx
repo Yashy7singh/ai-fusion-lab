@@ -17,6 +17,7 @@ import { SelectGroup, SelectLabel } from '@radix-ui/react-select'
 import { doc, updateDoc } from 'firebase/firestore'
 import { useUser } from '@clerk/nextjs'
 import { db } from '@/config/FirebaseConfig'
+import { setDoc } from 'firebase/firestore'
 
 function AiMultiModels() {
     const {user} = useUser();
@@ -30,18 +31,19 @@ function AiMultiModels() {
             ))
     }
 
-    const onSelectValue = async (model, value)=>{
-        setAiSelectedModels((prev)=>({
-            ...prev,
-            [model]: {
-                modelId: value
-            }
-        }))
-
-        const docRef = doc(db, "users", user?.primaryEmailAddress?.emailAddress);
-        await updateDoc(docRef, {
-            selectedModelPref : aiSelectedModels
-        });
+    const onSelectValue = async (model, value) => {
+      if (!user?.id) return; // optionally show a toast
+      const next = {
+        ...aiSelectedModels,
+        [model]: { modelId: value },
+      };
+      setAiSelectedModels(next);
+      try {
+        const docRef = doc(db, "users", user.id);
+        await setDoc(docRef, { selectedModelPref: next }, { merge: true });
+      } catch (e) {
+        console.error("Failed to persist model selection", e);
+      }
     }
 
   return (
@@ -55,7 +57,7 @@ function AiMultiModels() {
                     <div className='flex items-center gap-4'>
                         <Image src={model.icon} alt={model.model} width={24} height={24} />
 
-                  {model.enable &&  (<Select defaultValue={aiSelectedModels[model.model]?.modelId} 
+                  {model.enable &&  (<Select value={aiSelectedModels[model.model]?.modelId} 
                   onValueChange={(value)=>onSelectValue(model.model, value)}
                   disabled={model.premium}>
                         <SelectTrigger className="w-[180px]">
@@ -64,14 +66,15 @@ function AiMultiModels() {
                         <SelectContent>
                             <SelectGroup className='px-3'>
                                 <SelectLabel>Free</SelectLabel>
-                                {model.subModel && model.subModel.map((subModel, subIndex) => subModel.premium==false && (
+                                
+                                {model.subModel && model.subModel.map((subModel, subIndex) => subModel.premium===false && (
                                     <SelectItem key={subIndex} value={subModel.id}>{subModel.name}</SelectItem>
                                 ))}
                             </SelectGroup>
 
                             <SelectGroup className='px-3'>
                                 <SelectLabel>Premium</SelectLabel>
-                                {model.subModel && model.subModel.map((subModel, subIndex) => subModel.premium==true && (
+                                {model.subModel && model.subModel.map((subModel, subIndex) => subModel.premium===true && (
                                     <SelectItem key={subIndex} value={subModel.name} disabled={subModel.premium}>
                                         {subModel.name} {subModel.premium && <Lock className='inline-block ml-1 h-3 w-3'/>}    
                                     </SelectItem>

@@ -44,7 +44,7 @@ subModel: [
 
 { name: "Gemini 2.5 Flash", premium: false, id: "gemini-2.5-flash" },
 
-{ name: "Gemini 2.5 Pro", premium: true, id: "gemini 2.5 Pro" },
+{ name: "Gemini 2.5 Pro", premium: true, id: "Gemini 2.5 Pro" },
 
 ],
 
@@ -64,7 +64,7 @@ subModel: [
 
 { name: "DeepSeek R1", premium: false, id: "DeepSeek-R1" },
 
-{ name: "DeepSeek R1 8528", premium: false, id: "DeepSeek R1-8528" },
+{ name: "DeepSeek R1 8528", premium: false, id: "DeepSeek-R1-8528" },
 
 ],
 
@@ -84,7 +84,7 @@ subModel: [
 
 { name: "Mistral Medium 2505", premium: true, id: "mistral-medium-2505" },
 
-{ name: "Mistral 3B", premium: false, id: "mistral-3B" },
+{ name: "Mistral 3B", premium: false, id: "Ministral-3B" },
 
 ],
 
@@ -142,9 +142,9 @@ enable: true,
 
 subModel: [
 
-{ name: "Llama 3.3 70B Instruct", premium: true, id: "llama-3.3-70B-Instruct" },
+{ name: "Llama 3.3 70B Instruct", premium: true, id: "Llama-3.3-70B-Instruct" },
 
-{ name: "Llama 4 Scout 17B 16E Instruct", premium:true,id: "llama-4-Scout-17B-16E-Instruct" },
+{ name: "Llama 4 Scout 17B 16E Instruct", premium:true,id: "Llama-4-Scout-17B-16E-Instruct" },
 
 ],
 

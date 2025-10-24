@@ -22,13 +22,13 @@ function Provider({children, ...props}) {
 
   const CreateNewUser =  React.useCallback(async () => {
     try{
-        const userRef = doc(db, 'users', user?.primaryEmailAddress?.emailAddress || user?.emailAddresses[0]?.emailAddress);
+        const userRef = doc(db, 'users', user?.id);
         const userSnap = await  getDoc(userRef);
 
         if (userSnap.exists()) {
           console.log('User document already exists');
           const userInfo = userSnap.data();
-          setAiSelectedModels(userInfo.selectedModelPref);
+          setAiSelectedModels(userInfo.selectedModelPref ?? DefaultModel);
           setUserDetail(userInfo);
           return;
         }
