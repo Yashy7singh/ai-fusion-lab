@@ -10,42 +10,59 @@ import { useUser } from '@clerk/nextjs'
 import { doc, getDoc } from 'firebase/firestore'
 import { db } from '@/config/FirebaseConfig'
 import { setDoc } from 'firebase/firestore'
+import { AiSelectedModelContext } from '@/context/AiSelectedModelContext';
+import { DefaultModel } from '@/shared/AiModelsShared';
+import { UserDetailContext } from '@/context/UserDetailContext';
     
 
 function Provider({children, ...props}) {
   const {user} = useUser();
+  const [aiSelectedModels, setAiSelectedModels] = React.useState(DefaultModel);
+  const [userDetail, setUserDetail] = React.useState(null);
 
-  React.useEffect(() => {
+  const CreateNewUser =  React.useCallback(async () => {
+    try{
+        const userRef = doc(db, 'users', user?.primaryEmailAddress?.emailAddress || user?.emailAddresses[0]?.emailAddress);
+        const userSnap = await  getDoc(userRef);
+
+        if (userSnap.exists()) {
+          console.log('User document already exists');
+          const userInfo = userSnap.data();
+          setAiSelectedModels(userInfo.selectedModelPref);
+          setUserDetail(userInfo);
+          return;
+        }
+        else{
+          const userData = {
+            name  : user?.fullName || 'Anonymous',
+            email : user?.primaryEmailAddress?.emailAddress || user?.emailAddresses[0]?.emailAddress,
+            createdAt: new Date(),
+            remainingMsg: 5,
+            plan: 'free',
+            credits:1000
+        }
+        await setDoc(userRef, userData);
+        console.log('New user document created');
+        setUserDetail(userData);
+        }    
+  }
+  catch (error) {
+        console.error('Error creating user document:', error);
+        // Consider showing a user-facing error message or retry logic
+    }
+}, [user]);
+
+React.useEffect(() => {
     if(user){
       CreateNewUser();
     }
-  }, [user]);
-
-  const CreateNewUser = async () => {
-    const userRef = doc(db, 'users', user?.primaryEmailAddress?.emailAddress || user?.emailAddresses[0]?.emailAddress);
-    const userSnap = await  getDoc(userRef);
-
-    if (userSnap.exists()) {
-      console.log('User document already exists');
-      return;
-    }
-    else{
-      const userData = {
-        name  : user?.fullName || 'Anonymous',
-        email : user?.primaryEmailAddress?.emailAddress || user?.emailAddresses[0]?.emailAddress,
-        createdAt: new Date(),
-        remainingMsg: 5,
-        plan: 'free',
-        credits:1000
-    }
-    await setDoc(userRef, userData);
-    console.log('New user document created');
-  }
-}
+  }, [user,CreateNewUser]);
 
   return (
     <TooltipProvider>
-      <NextThemesProvider {...props} attribute="class" defaultTheme="system" enableSystem>
+      <NextThemesProvider {...props} attribute="class" defaultTheme="system" enableSystem >
+        <UserDetailContext.Provider value={{userDetail, setUserDetail}}>
+        <AiSelectedModelContext.Provider value={{aiSelectedModels, setAiSelectedModels}}>
             <SidebarProvider>
               <AppSidebar />
               
@@ -53,6 +70,8 @@ function Provider({children, ...props}) {
                 <AppHeader />
                 {children}</div>
             </SidebarProvider>
+          </AiSelectedModelContext.Provider>
+        </UserDetailContext.Provider>
       </NextThemesProvider>
     </TooltipProvider>
   )
