@@ -8,7 +8,7 @@ import {v4 as uuidv4} from 'uuid'
 import { doc } from 'firebase/firestore'
 import { db } from '@/config/FirebaseConfig'
 import { setDoc } from 'firebase/firestore'
-import { useUser } from '@clerk/nextjs'
+import { useAuth, useUser } from '@clerk/nextjs'
 import { useSearchParams } from 'next/navigation'
 import { getDoc } from 'firebase/firestore'
 import { set } from 'lodash'
@@ -20,6 +20,7 @@ function ChatInputBox() {
     const {aiSelectedModels, setAiSelectedModels,messages, setMessages} = React.useContext(AiSelectedModelContext); 
     const [chatId, setChatId] = React.useState(null); // Optional: for tracking chat sessions
     const {user} = useUser();
+    const plan = user?.publicMetadata?.plan;
     
     const params = useSearchParams();
 
@@ -39,16 +40,20 @@ function ChatInputBox() {
     const handleSend = async () => {
             if (!userInput.trim()) return;
 
-            const result = await axios.post('/api/user-remaining-msg', {
-               token:1
-            });
-            const remainingMsg = result?.data?.remainingMsg;
-
-            if(remainingMsg <=0){
-                console.log("No remaining messages.");
-                toast.error("You have exhausted your free message quota. Please upgrade your plan to continue using the service.");
-                return;
+            if(plan !== 'unlimited_plan'){
+             try {
+               const { data } = await axios.post('/api/user-remaining-msg');
+               const remainingMsg = data?.remainingMsg;
+               if (typeof remainingMsg !== 'number' || remainingMsg <= 0) {
+                 toast.error("You have exhausted your free message quota. Please upgrade your plan to continue using the service.");
+                 return;
+               }
+             } catch (err) {
+               console.error("Quota check failed:", err);
+               toast.error("Could not verify your quota. Please try again.");
+               return;
             }
+        }
             
             // 1️⃣ Add user message to all enabled models
             setMessages((prev) => {

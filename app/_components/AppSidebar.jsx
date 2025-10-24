@@ -22,13 +22,16 @@ import moment from "moment";
 import axios from "axios";
 import { set } from "lodash";
 import { AiSelectedModelContext } from "@/context/AiSelectedModelContext";
+import PricingModal from "./PricingModal";
+import { useAuth } from "@clerk/nextjs";
 
 export function AppSidebar() {
     const {theme, setTheme} = useTheme();
     const {user}  = useUser();
     const [chatHistory, setChatHistory] = React.useState([]); 
-    const [freeMsgCount, setFreeMsgCount] = React.useState(0);
+    const [freeMsgCount, setFreeMsgCount] = React.useState(null);
     const {aiSelectedModels, setAiSelectedModels, messages, setMessages} = React.useContext(AiSelectedModelContext);
+    const plan = user?.publicMetadata?.plan;
 
 
     useEffect(() => {
@@ -36,8 +39,12 @@ export function AppSidebar() {
     }, [user]);
 
     useEffect(() => {
+     GetRemainingMsgs();
+    }, [messages]);
+
+    useEffect(() => {
       GetRemainingMsgs();
-    },[messages]);
+    },[user?.id]);
 
 
     const GetChatHistory = async () => {
@@ -71,10 +78,17 @@ export function AppSidebar() {
     }
 
     const GetRemainingMsgs = async () => {
-      const result = await axios.post('/api/user-remaining-msg');
-      console.log(result.data);
-      setFreeMsgCount(result?.data?.remainingMsg);
-    }
+      try {
+        const result = await axios.post(
+           '/api/user-remaining-msg',
+           {}, // explicit empty JSON body
+           { headers: { 'Content-Type': 'application/json' } }
+         );
+         setFreeMsgCount(result?.data?.remainingMsg ?? 0);
+       } catch (err) {
+         console.error('Failed to fetch remaining messages', err);
+       }
+     }
 
   return (
     <Sidebar>
@@ -88,7 +102,7 @@ export function AppSidebar() {
                     width={60}
                     height={60}
 
-                    className='w-[40px] h-[40px]'
+                    className='w-10 h-10'
                     />
                     <h2 className="font-bold text-xl">Ai Fusion</h2>
                 </div>
@@ -135,8 +149,14 @@ export function AppSidebar() {
             <Button className={'w-full'} size={'lg'}>Sign In/Sign Up</Button>
             </SignInButton> : 
             <div>
-              <UsageCreditProgress remaining={freeMsgCount}/>
-              <Button className={'w-full mb-3'}><Zap/> Upgrade Plan</Button>
+              {plan !== 'unlimited_plan'  && 
+               <div>
+                  <UsageCreditProgress remaining={freeMsgCount}/>
+                <PricingModal>
+                  <Button className={'w-full mb-3'}><Zap/> Upgrade Plan</Button>
+                </PricingModal>
+              </div>
+              }
             <Button className="flex" variant={'ghost'}>
               <User2/> <h2>Settings</h2>
               </Button>

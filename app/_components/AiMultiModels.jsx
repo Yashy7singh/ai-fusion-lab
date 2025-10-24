@@ -15,7 +15,7 @@ import { Lock } from 'lucide-react'
 import { AiSelectedModelContext } from '@/context/AiSelectedModelContext'
 import { SelectGroup, SelectLabel } from '@radix-ui/react-select'
 import { doc, updateDoc } from 'firebase/firestore'
-import { useUser } from '@clerk/nextjs'
+import { useAuth, useUser } from '@clerk/nextjs'
 import { db } from '@/config/FirebaseConfig'
 import { setDoc } from 'firebase/firestore'
 import ReactMarkdown from 'react-markdown'
@@ -25,7 +25,7 @@ function AiMultiModels() {
     const {user} = useUser();
     const [aiModelList, setAiModelList] = React.useState(AiModelList);
     const {aiSelectedModels, setAiSelectedModels,messages, setMessages} = React.useContext(AiSelectedModelContext);
-
+    const plan = user?.publicMetadata?.plan;
 
     const onToggleChange = (model,value)=>{
         setAiModelList((prev)=>
@@ -70,7 +70,7 @@ function AiMultiModels() {
                     <div className='flex items-center gap-4'>
                         <Image src={model.icon} alt={model.model} width={24} height={24} />
 
-                  {model.enable &&  (<Select value={aiSelectedModels[model.model]?.modelId} 
+                  {plan !== 'unlimited_plan'  && model.enable &&  (<Select value={aiSelectedModels[model.model]?.modelId} 
                   onValueChange={(value)=>onSelectValue(model.model, value)}
                   disabled={model.premium}>
                         <SelectTrigger className="w-[180px]">
@@ -99,7 +99,9 @@ function AiMultiModels() {
                     </div>
 
                     <div>
-                       {model.enable ? <Switch checked={model.enable}
+                       {model.enable ? 
+                       <Switch checked={model.enable}
+                            disabled = {plan !== 'unlimited_plan'  && model.premium}
                             onCheckedChange={(checked) => onToggleChange(model.model,checked)}
                         />:
                         <Button variant="ghost" size="icon" onClick={()=> onToggleChange(model.model,true)}>
@@ -108,14 +110,15 @@ function AiMultiModels() {
                        }
                     </div>
                 </div>  
-                {model.premium && model.enable && <div className='flex justify-center items-center h-full'> 
+            {plan !== 'unlimited_plan'&& model.premium && model.enable && <div className='flex justify-center items-center h-full'> 
                     <Button>
                         <Lock/>
                         Upgrade to Unlock Premium Models
                     </Button>
                 </div> }
 
-                {model.enable && <div className='flex-1 p-4'>
+                {model.enable && aiSelectedModels[model.model]?.enable && (!model.premium || plan !== 'unlimited_plan')&& 
+                <div className='flex-1 p-4'>
                     <div className='flex-1 p-4 space-y-2'>
                      {messages[model.model] && messages[model.model].map((msg, msgIndex) => (
                         <div key={msgIndex} className={`p-4 border-b ${msg.role === 'user' ? 'bg-gray-400 border rounded-2xl text-black text-right' : 'bg-blue-300 border rounded-2xl text-blue-800 text-left'}`}>
