@@ -11,13 +11,12 @@ export async function POST(request) {
         { status: 400 }
       );
     }
-
-     if (typeof msg !== 'string' || msg.length === 0 || msg.length > 10000) {
+     if (!Array.isArray(msg) || msg.length === 0 || !msg[0]?.content || typeof msg[0].content !== 'string' || msg[0].content.length > 10000) {
       return NextResponse.json(
-        { error: "Invalid message: must be a non-empty string under 10000 characters" },
-        { status: 400 }
-      );
-    }
+         { error: "Invalid message: must be a non-empty array with valid content under 10000 characters" },
+         { status: 400 }
+       );
+     }
   /* Send POST request using Axios */
   const response = await axios.post(
     "https://kravixstudio.com/api/v1/chat",
