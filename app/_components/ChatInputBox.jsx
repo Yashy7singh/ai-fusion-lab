@@ -11,6 +11,9 @@ import { setDoc } from 'firebase/firestore'
 import { useUser } from '@clerk/nextjs'
 import { useSearchParams } from 'next/navigation'
 import { getDoc } from 'firebase/firestore'
+import { set } from 'lodash'
+import { toast } from 'sonner'
+import { debounce } from 'lodash';
 
 function ChatInputBox() {
     const [userInput, setUserInput] = React.useState('');
@@ -23,8 +26,9 @@ function ChatInputBox() {
     useEffect(() => {
         // Generate a unique chatId when component mounts
         if(params.get('chatId')){
-            setChatId(params.get('chatId'));
-            GetMessages(params.get('chatId'));
+            const urlChatId = params.get('chatId');
+            setChatId(urlChatId);
+            GetMessages(urlChatId);
             return;
         }else{
             setMessages({});
@@ -35,6 +39,17 @@ function ChatInputBox() {
     const handleSend = async () => {
             if (!userInput.trim()) return;
 
+            const result = await axios.post('/api/user-remaining-msg', {
+               token:1
+            });
+            const remainingMsg = result?.data?.remainingMsg;
+
+            if(remainingMsg <=0){
+                console.log("No remaining messages.");
+                toast.error("You have exhausted your free message quota. Please upgrade your plan to continue using the service.");
+                return;
+            }
+            
             // 1️⃣ Add user message to all enabled models
             setMessages((prev) => {
                 const updated = { ...prev };
@@ -113,30 +128,41 @@ function ChatInputBox() {
             });
             await Promise.allSettled(apiCalls);
 };
+
+
+
+const SaveMessagesDebounced = React.useCallback(
+    debounce(async (messagesToSave, chatIdToSave, userEmail) => {
+        if (!chatIdToSave || !userEmail) return;
+        try {
+            const docRef = doc(db, "chatHistory", chatIdToSave);
+            await setDoc(docRef, {
+                chatId: chatIdToSave,
+                userEmail: userEmail,
+                messages: messagesToSave,
+                lastUpdated: Date.now()
+            }, { merge: true });
+        } catch (error) {
+            console.error("Error saving messages:", error);
+        }
+    }, 1000),
+    []
+);
         
 useEffect(() => {
         // console.log("Messages updated:", messages);
-        if(messages){
-            SaveMessages();
+        if (messages && chatId && user?.primaryEmailAddress?.emailAddress) {
+            SaveMessagesDebounced(messages, chatId, user.primaryEmailAddress.emailAddress);
         }
     }, [messages]);
 
-    const SaveMessages = async () => {
-       const docRef = doc(db, "chatHistory", chatId);
-
-       await setDoc(docRef, {
-        chatId: chatId,
-        userEmail: user?.primaryEmailAddress?.emailAddress,
-        messages: messages,
-        lastUpdated: Date.now()
-       }, { merge: true });
-    }
-
-    const GetMessages = async () => {
-        console.log("INSDE", chatId);
-        const docRef = doc(db, "chatHistory", chatId);
+    const GetMessages = async (chatIdParam) => {
+        const docRef = doc(db, "chatHistory", chatIdParam);
         const docSnap = await getDoc(docRef);
-        console.log("Fetched chat doc:", docSnap.data());
+        if (!docSnap.exists()) {
+         console.error("Chat not found");
+         return;
+     }
         const docData = docSnap.data();
         setMessages(docData.messages);
     }

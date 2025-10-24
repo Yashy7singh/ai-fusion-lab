@@ -76,15 +76,6 @@ React.useEffect(() => {
     }
 }, [aiSelectedModels,user]);
 
-const updateModelSelection = async () => {
-  if (!user?.id) return;
-  try{
-    const docRef = doc(db, "users", user.id);
-    await setDoc(docRef, { selectedModelPref: aiSelectedModels }, { merge: true });
-  } catch (error) {
-    console.error("Error updating model selection:", error);
-  }
-};
 
   return (
     <TooltipProvider>
