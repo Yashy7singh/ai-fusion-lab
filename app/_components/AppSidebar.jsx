@@ -19,25 +19,41 @@ import { collection, getDocs, query, where } from "firebase/firestore";
 import { db } from "@/config/FirebaseConfig";
 import { useEffect } from "react";
 import moment from "moment";
+import axios from "axios";
+import { set } from "lodash";
+import { AiSelectedModelContext } from "@/context/AiSelectedModelContext";
 
 export function AppSidebar() {
     const {theme, setTheme} = useTheme();
     const {user}  = useUser();
     const [chatHistory, setChatHistory] = React.useState([]); 
+    const [freeMsgCount, setFreeMsgCount] = React.useState(0);
+    const {aiSelectedModels, setAiSelectedModels, messages, setMessages} = React.useContext(AiSelectedModelContext);
+
+
     useEffect(() => {
       user && GetChatHistory();
     }, [user]);
 
+    useEffect(() => {
+      GetRemainingMsgs();
+    },[messages]);
+
 
     const GetChatHistory = async () => {
+      try{
+        const chatList = [];
         // Implement your fetch chat history logic here
         const q = query(collection(db, "chatHistory"), where("userEmail", "==", user?.primaryEmailAddress?.emailAddress));
         const querySnapshot = await getDocs(q);
         
         querySnapshot.forEach((doc) => {
-          console.log(doc.id, doc.data());
-          setChatHistory(prev => [...prev, doc.data()]);
+          chatList.push(doc.data());
         });
+        setChatHistory(chatList);
+      } catch (error) {
+        console.error("Error fetching chat history:", error);
+      }
     }
 
     const GetLastUserMessageFromChat = (chat) => {
@@ -52,6 +68,12 @@ export function AppSidebar() {
         message: lastUserMessage,
         lastMsgDate: formattedDate
       }
+    }
+
+    const GetRemainingMsgs = async () => {
+      const result = await axios.post('/api/user-remaining-msg');
+      console.log(result.data);
+      setFreeMsgCount(result?.data?.remainingMsg);
     }
 
   return (
@@ -113,7 +135,7 @@ export function AppSidebar() {
             <Button className={'w-full'} size={'lg'}>Sign In/Sign Up</Button>
             </SignInButton> : 
             <div>
-              <UsageCreditProgress/>
+              <UsageCreditProgress remaining={freeMsgCount}/>
               <Button className={'w-full mb-3'}><Zap/> Upgrade Plan</Button>
             <Button className="flex" variant={'ghost'}>
               <User2/> <h2>Settings</h2>
