@@ -117,7 +117,7 @@ function AiMultiModels() {
                     </Button>
                 </div> }
 
-                {model.enable && aiSelectedModels[model.model]?.enable && (!model.premium || plan !== 'unlimited_plan')&& 
+                {model.enable && aiSelectedModels[model.model]?.enable && (!model.premium || plan === 'unlimited_plan')&& 
                 <div className='flex-1 p-4'>
                     <div className='flex-1 p-4 space-y-2'>
                      {messages[model.model] && messages[model.model].map((msg, msgIndex) => (

@@ -32,6 +32,7 @@ export function AppSidebar() {
     const [freeMsgCount, setFreeMsgCount] = React.useState(null);
     const {aiSelectedModels, setAiSelectedModels, messages, setMessages} = React.useContext(AiSelectedModelContext);
     const plan = user?.publicMetadata?.plan;
+    const isUnlimited = plan === 'unlimited_plan';
 
 
     useEffect(() => {
@@ -99,8 +100,8 @@ export function AppSidebar() {
                     <Image
                     src="/logo.svg"
                     alt="Logo"
-                    width={60}
-                    height={60}
+                    width={40}
+                    height={40}
 
                     className='w-10 h-10'
                     />
