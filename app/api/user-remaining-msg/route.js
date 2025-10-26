@@ -49,15 +49,11 @@ export async function POST(req) {
             token = undefined;
         }
 
-        // 3. Perform the Arcjet protection check.
-        // If 'token' is not provided, the 'requested' value will be 'null'.
-        const decision = await aj.protect(req, {
-            userId: userId,
-            requested: token, // This is null if not provided in the body
-        });
-
+        const options = { userId };
+         if (token != null) options.requested = token;
+        const decision = await aj.protect(req, options);
         // 4. Log the result for server-side debugging (helps catch issues)
-        console.log("User Remaining Msg Decision:", decision.reason.remaining);
+        console.log("User Remaining Msg Decision:", decision.reason.remaining ?? null);
 
         // 5. Handle the result based on the 'token' presence and Arcjet decision.
         const remainingMsg = decision.reason.remaining;

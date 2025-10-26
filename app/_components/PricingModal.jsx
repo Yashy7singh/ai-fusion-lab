@@ -17,7 +17,7 @@ function PricingModal({children}) {
       <DialogTrigger className="w-full">
         <div className="w-full">{children}</div>
       </DialogTrigger>
-      <DialogContent className={"min-w-4xl"}>
+      <DialogContent className={"w-full max-w-4xl"}>
         <DialogHeader>
           <DialogTitle>Upgrade Plan</DialogTitle>
           {/* Keep a simple text description here */}
